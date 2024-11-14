@@ -1,0 +1,113 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Tic Tac Toe 1024',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: GameScreen(),
+    );
+  }
+}
+
+class GameScreen extends StatefulWidget {
+  @override
+  _GameScreenState createState() => _GameScreenState();
+}
+
+class _GameScreenState extends State<GameScreen> {
+  static const int gridSize = 32; 
+  List<List<String?>> grid = List.generate(gridSize, (_) => List.filled(gridSize, null));
+  String currentPlayer = 'X'; 
+
+  void tapCell(int x, int y) {
+    if (grid[x][y] == null) {
+      setState(() {
+        grid[x][y] = currentPlayer;
+        currentPlayer = currentPlayer == 'X' ? 'O' : 'X';
+      });
+      if (checkWinner(x, y)) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Game over!'),
+            content: Text('Player ${grid[x][y]} won!'),
+            actions: [
+              TextButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  resetGame();
+                },
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  void resetGame() {
+    setState(() {
+      grid = List.generate(gridSize, (_) => List.filled(gridSize, null));
+      currentPlayer = 'X';
+    });
+  }
+
+  bool checkWinner(int x, int y) {
+    String player = grid[x][y]!;
+    return checkDirection(x, y, player, 1, 0) || // Horizontal
+           checkDirection(x, y, player, 0, 1) || // Vertical
+           checkDirection(x, y, player, 1, 1) || // Diagonal \
+           checkDirection(x, y, player, 1, -1);  // Diagonal /
+  }
+
+  bool checkDirection(int x, int y, String player, int dx, int dy) {
+    int count = 1;
+    count += countInDirection(x, y, player, dx, dy);
+    count += countInDirection(x, y, player, -dx, -dy);
+    return count >= 3;
+  }
+
+  int countInDirection(int x, int y, String player, int dx, int dy) {
+    int count = 0;
+    int nx = x + dx;
+    int ny = y + dy;
+    while (nx >= 0 && ny >= 0 && nx < gridSize && ny < gridSize && grid[nx][ny] == player) {
+      count++;
+      nx += dx;
+      ny += dy;
+    }
+    return count;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Tic Tac Toe 1024')),
+      body: GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: gridSize),
+        itemCount: gridSize * gridSize,
+        itemBuilder: (context, index) {
+          int x = index ~/ gridSize;
+          int y = index % gridSize;
+          return GestureDetector(
+            onTap: () => tapCell(x, y),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.black),
+                color: grid[x][y] == 'X' ? const Color.fromARGB(255, 255, 255, 255) : (grid[x][y] == 'O' ? const Color.fromARGB(255, 255, 255, 255) : Colors.white),
+              ),
+              child: Center(child: Text(grid[x][y] ?? '', style: TextStyle(fontSize: 24))),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
